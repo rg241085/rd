@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advance Dalali & Trading Hisab</title>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -501,7 +504,8 @@
             }
 
             .close-btn,
-            .btn-print {
+            .btn-print,
+            #shareBtnElement {
                 display: none !important;
             }
 
@@ -616,9 +620,9 @@
 
             <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                 <div class="form-group"><label>1. Date</label><input type="date" id="dateInput" class="nav-item"></div>
+                <!-- NAYA: onchange par onBuyerChange function chalega -->
                 <div class="form-group"><label>2. Jisko Mal Becha (Buyer)</label><input list="partyList" id="buyerInput"
-                        class="nav-item" placeholder="Naam chunein"
-                        onchange="checkAndAddMaster(this, 'party', 'Party')"></div>
+                        class="nav-item" placeholder="Naam chunein" onchange="onBuyerChange(this)"></div>
                 <div class="form-group"><label>3. Jisse Kharida (Supplier)</label><input list="partyList"
                         id="supplierInput" class="nav-item" placeholder="Naam chunein"
                         onchange="checkAndAddMaster(this, 'party', 'Party')"></div>
@@ -758,7 +762,6 @@
 
     <!-- VIEW ENTRY MODAL -->
     <div id="viewModal" class="modal">
-        <!-- Buttons ab Parchi ke bahar aur alag-alag hain -->
         <div
             style="width: 90%; max-width: 500px; margin: 2% auto; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
             <div style="display: flex; gap: 10px;">
@@ -773,13 +776,10 @@
                 style="color: #fff; font-size: 35px; font-weight: bold; cursor: pointer; background: red; border-radius: 50%; width: 40px; height: 40px; text-align: center; line-height: 35px;">&times;</span>
         </div>
 
-        <!-- Asli Parchi jiska Screenshot banega -->
         <div class="modal-content" id="parchiCaptureArea" style="margin: 0 auto; margin-bottom: 20px;">
             <div id="modalBody"></div>
         </div>
     </div>
-
-
 
     <!-- MASTER MANAGEMENT MODAL -->
     <div id="masterModal" class="modal">
@@ -807,7 +807,7 @@
     <datalist id="transportList"></datalist>
 
     <script>
-        // 🔴 YAHAN APNA FIREBASE CONFIG DALEIN JO FIREBASE WEBSITE SE MILA HAI 🔴
+        // 🔴 FIREBASE CONFIG 🔴
         const firebaseConfig = {
             apiKey: "AIzaSyCXvZwgzo_B45LUNuhv5Kohf_WfEKwENdk",
             authDomain: "broker-7e6ef.firebaseapp.com",
@@ -817,7 +817,6 @@
             appId: "1:104366074094:web:3dc01b8af70d9791982bff"
         };
 
-        // Firebase chalu karna
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -829,39 +828,83 @@
         let transactions = [];
         let currentEditId = null;
 
-        // --- NAYA: FIREBASE REALTIME SYNC ---
         window.onload = function () {
             document.getElementById('dateInput').valueAsDate = new Date();
 
-            // Masters ko database se lana
             db.collection("settings").doc("masters").onSnapshot((doc) => {
                 if (doc.exists) {
                     masters = doc.data();
                 } else {
-                    db.collection("settings").doc("masters").set(masters); // Agar nahi hai to default save karein
+                    db.collection("settings").doc("masters").set(masters);
                 }
                 updateDatalists();
             });
 
-            // Saudo (Transactions) ko database se lana (Realtime)
             db.collection("transactions").onSnapshot((querySnapshot) => {
                 transactions = [];
                 querySnapshot.forEach((doc) => {
                     let data = doc.data();
-                    data.id = doc.id; // Firebase ID
+                    data.id = doc.id;
                     transactions.push(data);
                 });
-                // Date ke hisab se ulta set karein (Naya sauda upar)
                 transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
                 filterTable();
             });
+
+            // NAYA: Date format ab YYYY ke sath hai aur Enter dabane par Next jayega
+            flatpickr("input[type='date']", {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d-m-Y", // Y capital hai saal ke 4 digits (2026) ke liye
+                allowInput: true,
+                onReady: function (selectedDates, dateStr, instance) {
+                    instance.altInput.addEventListener('input', function (e) {
+                        let val = this.value.replace(/\D/g, '');
+                        if (val.length > 8) val = val.substring(0, 8); // Ab 8 digits allowed hain (dd-mm-yyyy)
+                        let formatted = val;
+                        if (val.length > 2) {
+                            formatted = val.substring(0, 2) + '-' + val.substring(2);
+                        }
+                        if (val.length > 4) {
+                            formatted = formatted.substring(0, 5) + '-' + formatted.substring(5).replace('-', '');
+                        }
+                        this.value = formatted;
+                    });
+
+                    // Enter dabane par date field se focus Buyer par bhejna
+                    instance.altInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            setTimeout(() => document.getElementById('buyerInput').focus(), 10);
+                        }
+                    });
+                }
+            });
         };
+
+        // --- SABHI FUNCTIONS ---
 
         function saveMastersLocally() {
             db.collection("settings").doc("masters").set(masters);
         }
 
-        // --- BAKAAI PURANA LOGIC (Same to Same) ---
+        // NAYA: Transport Auto-fill function
+        function onBuyerChange(input) {
+            checkAndAddMaster(input, 'party', 'Party');
+
+            let buyerName = input.value.trim();
+            let transportInput = document.getElementById('transportInput');
+
+            // Sirf tab auto-fill karega jab transport field khali ho
+            if (buyerName !== "" && transportInput.value === "") {
+                // Transactions already date se sorted hain (naya sauda pehle hai)
+                let lastTxn = transactions.find(t => t.buyer === buyerName && t.transport && t.transport.trim() !== "");
+                if (lastTxn) {
+                    transportInput.value = lastTxn.transport;
+                }
+            }
+        }
+
         function toggleForm() {
             let form = document.getElementById('entryFormCard');
             let btn = document.getElementById('mobileAddFormBtn');
@@ -878,7 +921,7 @@
 
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
-                let navItems = Array.from(document.querySelectorAll('.nav-item'));
+                let navItems = Array.from(document.querySelectorAll('.nav-item')).filter(el => el.type !== 'hidden');
                 let currentIndex = navItems.indexOf(document.activeElement);
                 if (currentIndex > -1) {
                     event.preventDefault();
@@ -970,15 +1013,18 @@
                 }
             }
         }
+
         function fillFilterSelect(selectId, dataArray) {
             let select = document.getElementById(selectId); if (!select || !dataArray) return;
             select.innerHTML = '<option value="">-- Sabhi --</option>';
             dataArray.forEach(item => { select.innerHTML += `<option value="${item}">${item}</option>`; });
         }
+
         function updateDatalists() {
             fillDatalist('partyList', masters.party); fillDatalist('itemList', masters.item); fillDatalist('transportList', masters.transport);
             fillFilterSelect('buyerFilter', masters.party); fillFilterSelect('supplierFilter', masters.party); fillFilterSelect('itemFilter', masters.item);
         }
+
         function fillDatalist(listId, dataArray) {
             let dataList = document.getElementById(listId); if (!dataList) return;
             dataList.innerHTML = ""; dataArray.forEach(item => { dataList.innerHTML += `<option value="${item}">`; });
@@ -994,6 +1040,7 @@
             renderMasterList('partyMasterList', 'party'); renderMasterList('itemMasterList', 'item'); renderMasterList('transportMasterList', 'transport');
             document.getElementById('masterModal').style.display = 'block';
         }
+
         function renderMasterList(containerId, type) {
             let container = document.getElementById(containerId); container.innerHTML = "";
             masters[type].forEach((val, index) => {
@@ -1002,11 +1049,11 @@
                 <button class="action-btn btn-pending" onclick="deleteMasterItem('${type}', ${index})">🗑️ Delete</button></div></div>`;
             });
         }
+
         function editMasterItem(type, index) {
             let oldVal = masters[type][index]; let newVal = prompt("Naya naam likhein:", oldVal);
             if (newVal && newVal.trim() !== "" && newVal !== oldVal) {
                 masters[type][index] = newVal.trim(); saveMastersLocally(); renderMasterList(type + 'MasterList', type);
-                // Firebase me saare purane name update karna
                 if (confirm("Kya purane saudo mein bhi yeh naam badalna hai?")) {
                     transactions.forEach(t => {
                         let updated = false;
@@ -1018,11 +1065,11 @@
                 }
             }
         }
+
         function deleteMasterItem(type, index) {
             if (confirm("Pakka is naam ko list se hatana hai?")) { masters[type].splice(index, 1); saveMastersLocally(); renderMasterList(type + 'MasterList', type); }
         }
 
-        // --- NAYA: FIREBASE SAVE DATA ---
         function saveTransaction() {
             let date = document.getElementById('dateInput').value;
             let buyer = document.getElementById('buyerInput').value;
@@ -1060,9 +1107,9 @@
 
             if (currentEditId === null) {
                 entryData.isReceived = false; entryData.paymentDone = false; entryData.paymentDate = "";
-                db.collection("transactions").add(entryData); // Firebase Par Naya Sauda Save
+                db.collection("transactions").add(entryData);
             } else {
-                db.collection("transactions").doc(currentEditId).update(entryData); // Firebase Par Update
+                db.collection("transactions").doc(currentEditId).update(entryData);
                 currentEditId = null;
                 let btn = document.getElementById('saveBtn'); btn.innerHTML = "💾 Sauda Save Karein"; btn.style.backgroundColor = "#27ae60";
             }
@@ -1091,8 +1138,9 @@
             let btn = document.getElementById('saveBtn'); btn.innerHTML = "🔄 Sauda Update Karein"; btn.style.backgroundColor = "#e67e22";
         }
 
+        // NAYA: 4 digit saal ke format ke hisab se theek kiya
         function formatDateDDMMYY(dateStr) {
-            if (!dateStr) return ''; let p = dateStr.split('-'); if (p.length === 3) return p[2] + '-' + p[1] + '-' + p[0].slice(-2); return dateStr;
+            if (!dateStr) return ''; let p = dateStr.split('-'); if (p.length === 3) return p[2] + '-' + p[1] + '-' + p[0]; return dateStr;
         }
 
         function viewEntry(id) {
@@ -1130,7 +1178,6 @@
             document.getElementById('searchInput').value = ''; document.getElementById('filterType').value = 'all'; document.getElementById('fromDateFilter').value = ''; document.getElementById('toDateFilter').value = ''; document.getElementById('buyerFilter').value = ''; document.getElementById('supplierFilter').value = ''; document.getElementById('itemFilter').value = ''; filterTable();
         }
 
-        // --- NAYA: FIREBASE UPDATE CALLS ---
         function toggleDalaliStatus(id) {
             let txn = transactions.find(t => t.id === id);
             if (txn) {
@@ -1180,7 +1227,6 @@
                 totalQty += t.qty; totalWeightCount += t.weight; grandTotal += t.totalAmount; totalDalaliAmount += t.dalali;
                 if (t.isReceived) dalaliReceivedAmount += t.dalali; else dalaliPendingAmount += t.dalali;
 
-                // Note: Use '${t.id}' to handle Firebase String IDs correctly
                 let row = `<tr>
                 <td data-label="📅 Date:">${formatDateDDMMYY(t.date)}</td>
                 <td data-label="👤 Jisko Becha:"><strong>${t.buyer}</strong></td>
@@ -1192,8 +1238,13 @@
                 <td data-label="💰 Total Amount:" style="color:green; font-weight:bold;">₹${t.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
                 <td data-label="💸 Dalali (1%):" style="color:#2980b9; font-weight:bold;">₹${t.dalali.toLocaleString('en-IN', { maximumFractionDigits: 2 })}<br><button class="action-btn ${t.isReceived ? 'btn-received' : 'btn-pending'}" onclick="toggleDalaliStatus('${t.id}')" style="width:100px; margin-top:5px;">${t.isReceived ? '✅ Aayi' : '⏳ Baki'}</button></td>
                 <td data-label="📝 Mal Ka Hisab:"><button class="action-btn ${t.paymentDone ? 'btn-payment-done' : 'btn-payment-pending'}" onclick="togglePaymentStatus('${t.id}')" style="width:100px;">${t.paymentDone ? '✅ Chukta' : '⏳ Baki'}</button>${t.paymentDone ? `<br><small style="color:gray">${t.paymentDate}</small>` : ''}</td>
-                <td data-label="⚙️ Actions:" style="display:flex; gap:10px; justify-content:flex-end;"><button class="action-btn btn-view" onclick="viewEntry('${t.id}')" style="width:50px;">👁️ View</button><button class="action-btn btn-edit" onclick="editEntry('${t.id}')" style="width:50px;">✏️ Edit</button></td>
-            </tr>`;
+              <td data-label="⚙️ Actions:" style="display:flex; gap:5px; justify-content:flex-end;">
+                    <button class="action-btn btn-view" onclick="viewEntry('${t.id}')" style="flex:1; min-width:40px;">👁️</button>
+                    <button class="action-btn btn-edit" onclick="editEntry('${t.id}')" style="flex:1; min-width:40px;">✏️</button>
+                    <button class="action-btn btn-pending" onclick="deleteEntry('${t.id}')" style="flex:1; min-width:40px;">🗑️</button>
+                </td>
+            
+                </tr>`;
                 tbody.innerHTML += row;
             });
 
@@ -1208,7 +1259,6 @@
         </tr>`;
         }
 
-        // --- NAYA FUNCTION: BINA GALLERY MEIN SAVE KIYE SHARE KARNA ---
         function shareParchi(event) {
             if (event) { event.preventDefault(); event.stopPropagation(); }
 
@@ -1224,7 +1274,6 @@
                 canvas.toBlob(function (blob) {
                     let file = new File([blob], "Sauda_Parchi.png", { type: "image/png" });
 
-                    // Check karega ki phone me share support hai ya nahi
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         navigator.share({
                             title: 'Sauda Parchi',
@@ -1233,12 +1282,10 @@
                             shareBtn.innerHTML = originalText;
                             shareBtn.style.backgroundColor = "#25D366";
                         }).catch(err => {
-                            // Agar user back kar de
                             shareBtn.innerHTML = originalText;
                             shareBtn.style.backgroundColor = "#25D366";
                         });
                     } else {
-                        // Ab download nahi hoga, sirf message aayega
                         alert("Aapka browser direct image share support nahi karta. Kripya Google Chrome ka istemal karein.");
                         shareBtn.innerHTML = originalText;
                         shareBtn.style.backgroundColor = "#25D366";
@@ -1246,11 +1293,44 @@
                 }, 'image/png');
             });
         }
+        // --- NAYA FUNCTION: ENTRY DELETE KARNA (WITH 2 WARNINGS & SECURITY CODE) ---
+        function deleteEntry(id) {
+            // Warning 1
+            if (!confirm("⚠️ WARNING 1: Kya aap is saude ko sach mein hamesha ke liye Delete karna chahte hain?")) {
+                return;
+            }
+
+            // Warning 2
+            if (!confirm("🛑 WARNING 2: Dhyan dein! Ek baar delete hone ke baad ye sauda wapas nahi aayega. Pakka delete karna hai?")) {
+                return;
+            }
+
+            // Security Code Generate Karna (Aaj ki Date bina dash ke, Jaise: 04092026)
+            let today = new Date();
+            let dd = String(today.getDate()).padStart(2, '0');
+            let mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+            let yyyy = today.getFullYear();
+            let securityCode = dd + mm + yyyy;
+
+            // Final Password (Security Code) maangna
+            let userInput = prompt(`🔒 SECURITY CHECK:\nDelete karne ke liye aaj ki date bina kisi dash ke dalein.\n\n(Hint: Aaj ka code hai ${securityCode})`, "");
+
+            if (userInput === securityCode) {
+                // Agar code sahi hai toh Firebase se delete kar do
+                db.collection("transactions").doc(id).delete().then(() => {
+                    alert("✅ Sauda hamesha ke liye delete ho gaya hai.");
+                    // Table apne aap Firebase ke onSnapshot se update ho jayegi
+                }).catch((error) => {
+                    alert("❌ Delete karne mein dikkat aayi: " + error.message);
+                });
+            } else {
+                if (userInput !== null) {
+                    alert("❌ Galat Security Code! Sauda delete nahi hua.");
+                }
+            }
+        }
+
     </script>
-</body>
-
-</html>
-
 </body>
 
 </html>
