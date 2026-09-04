@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advance Dalali & Trading Hisab</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1350px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .header-actions {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-manage-masters {
+            background: #8e44ad;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-manage-masters:hover {
+            background: #732d91;
+        }
+
+        #mobileAddFormBtn {
+            display: none;
+            background: #27ae60;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .sub-header {
+            background-color: #7f8c8d;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 10px;
+            margin-top: 15px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .live-total-text {
+            color: #c0392b;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        button:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+            background-color: #fdfefe;
+        }
+
+        .total-input {
+            background-color: #eafaf1;
+            border: 2px solid #2ecc71;
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        .weight-input {
+            background-color: #fff8e1;
+            border: 1px solid #f39c12;
+            font-weight: bold;
+            color: #d35400;
+        }
+
+        .expense-total-input {
+            background-color: #f9ebea;
+            border-color: #e74c3c;
+            font-weight: bold;
+            color: #c0392b;
+        }
+
+        .expense-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .expense-col {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: #fdf2e9;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #fad7a1;
+        }
+
+        .expense-col label {
+            font-size: 12px;
+            color: #d35400;
+        }
+
+        .expense-col input {
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+
+        .extra-name-input {
+            border: 1px solid #d35400;
+            border-radius: 4px;
+            padding: 2px 5px !important;
+            font-size: 12px !important;
+            font-weight: bold;
+            color: #d35400;
+            background: transparent;
+            margin-bottom: 2px;
+        }
+
+        .btn-submit {
+            background-color: #27ae60;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        .btn-submit:hover {
+            background-color: #219150;
+        }
+
+        .action-btn {
+            padding: 5px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: 0.3s;
+            margin: 2px;
+        }
+
+        .btn-view {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-edit {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .btn-pending {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-received {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .btn-payment-done {
+            background-color: #9b59b6;
+            color: white;
+        }
+
+        .btn-payment-pending {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-clear {
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .btn-clear:hover {
+            background-color: #c0392b;
+        }
+
+        .boxes-wrapper {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px dashed #3498db;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .boxes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .box-input-item {
+            text-align: center;
+            font-weight: bold;
+            padding: 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 2;
+            min-width: 200px;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #3498db;
+            border-radius: 6px;
+        }
+
+        .filter-select {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px;
+            font-size: 15px;
+            border: 2px solid #2c3e50;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .multi-filter-box {
+            background: #eaf2f8;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #d4e6f1;
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+
+        .multi-filter-box label {
+            font-size: 12px;
+            color: #2980b9;
+            margin-bottom: 4px;
+        }
+
+        .multi-filter-box input,
+        .multi-filter-box select {
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #2c3e50;
+            color: white;
+            padding: 8px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 8px;
+            text-align: center;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tfoot {
+            background-color: #eaeded;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 3% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: red;
+        }
+
+        .receipt-header {
+            border-bottom: 2px dashed #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .receipt-row strong {
+            color: #2c3e50;
+        }
+
+        .bag-weight-box {
+            font-size: 13px;
+            color: #555;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            background: #fdf2e9;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #fad7a1;
+        }
+
+        .bag-weight-item {
+            background: #fff;
+            padding: 3px 6px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            margin: 3px;
+            font-size: 13px;
+        }
+
+        .master-section {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .master-section h3 {
+            margin-top: 0;
+            color: #8e44ad;
+            font-size: 16px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .master-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            border-bottom: 1px dotted #ccc;
+            font-size: 14px;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #viewModal,
+            #viewModal * {
+                visibility: visible;
+            }
+
+            #viewModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+
+            .close-btn,
+            .btn-print {
+                display: none !important;
+            }
+
+            .modal-content {
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            #entryFormCard {
+                display: none;
+            }
+
+            #mobileAddFormBtn {
+                display: block;
+            }
+
+            .expense-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+                border: none;
+            }
+
+            thead tr {
+                display: none;
+            }
+
+            tbody tr {
+                border: 2px solid #3498db;
+                border-radius: 8px;
+                margin-bottom: 15px;
+                background: #fff;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                padding: 10px;
+            }
+
+            td {
+                border-bottom: 1px dashed #ddd;
+                position: relative;
+                padding: 10px 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-align: right;
+            }
+
+            td:last-child {
+                border-bottom: none;
+            }
+
+            td::before {
+                content: attr(data-label);
+                font-weight: bold;
+                color: #2c3e50;
+                text-align: left;
+                flex-basis: 40%;
+                font-size: 13px;
+            }
+
+            td>* {
+                flex-basis: 60%;
+                text-align: right;
+                font-size: 14px;
+            }
+
+            tfoot tr {
+                background: #e8f4f8;
+                border-radius: 8px;
+                padding: 10px;
+                border: 2px solid #2ecc71;
+                margin-bottom: 20px;
+            }
+
+            .hide-mobile {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>RD Jaipur</h1>
+
+        <div class="header-actions">
+            <button id="mobileAddFormBtn" onclick="toggleForm()"
+                style="border-radius: 50%; width: 45px; height: 45px; font-size: 20px; padding: 0;"
+                title="Naya Sauda">➕</button>
+            <button class="btn-manage-masters" onclick="openMasterModal()">⚙️ Master List Manage Karein</button>
+        </div>
+
+        <!-- SAUDA ENTRY FORM -->
+        <div class="card" id="entryFormCard">
+            <div class="card-header">📝 Sauda Darj / Edit Karein (Aage: 'Enter' | Piche: 'Shift+Enter')</div>
+
+            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="form-group"><label>1. Date</label><input type="date" id="dateInput" class="nav-item"></div>
+                <div class="form-group"><label>2. Jisko Mal Becha (Buyer)</label><input list="partyList" id="buyerInput"
+                        class="nav-item" placeholder="Naam chunein"
+                        onchange="checkAndAddMaster(this, 'party', 'Party')"></div>
+                <div class="form-group"><label>3. Jisse Kharida (Supplier)</label><input list="partyList"
+                        id="supplierInput" class="nav-item" placeholder="Naam chunein"
+                        onchange="checkAndAddMaster(this, 'party', 'Party')"></div>
+            </div>
+
+            <div style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
+
+            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));">
+                <div class="form-group"><label>4a. Item</label><input list="itemList" id="itemInput" class="nav-item"
+                        placeholder="Mal" onchange="checkAndAddMaster(this, 'item', 'Item')"></div>
+                <div class="form-group"><label>4b. Lot No.</label><input type="text" id="lotInput" class="nav-item"
+                        placeholder="L-105"></div>
+                <div class="form-group"><label>4c. Bharti</label><input type="number" id="bhartiInput" class="nav-item"
+                        placeholder="Ex: 50" oninput="generateBoxes()"></div>
+                <div class="form-group"><label>4d. Qty (Bags)</label><input type="number" id="qtyInput" class="nav-item"
+                        placeholder="Ex: 10" oninput="generateBoxes()"></div>
+                <div class="form-group"><label>4e. Less (kg)</label><input type="number" id="lessWeightInput"
+                        class="nav-item" placeholder="Ex: 0.5" oninput="sumAllBoxes()"></div>
+                <div class="form-group"><label>4f. Net Wajan</label><input type="number" id="weightInput"
+                        class="nav-item weight-input" placeholder="Net Total" oninput="recalcAllExpenses()"></div>
+                <div class="form-group"><label>4g. Bhav (₹)</label><input type="number" id="rateInput" class="nav-item"
+                        placeholder="Rate" oninput="recalcAllExpenses()"></div>
+            </div>
+
+            <div id="dynamicBoxesWrapper" class="boxes-wrapper">
+                <h4>📦 Har Box/Bag ka Gross Wajan:</h4>
+                <div id="boxesContainer" class="boxes-grid"></div>
+            </div>
+
+            <div class="sub-header">💸 Extra Kharche (Rate ya Total koi ek daalein)</div>
+
+            <div class="expense-grid">
+                <div class="expense-col"><label>Bardana <span id="bardanaLiveTotal"
+                            class="live-total-text"></span></label>
+                    <input type="number" id="bardanaRateInput" class="nav-item" placeholder="₹ Rate"
+                        oninput="calcExpense('bardana', 'rate')">
+                    <input type="number" id="bardanaTotalInput" class="nav-item expense-total-input"
+                        placeholder="₹ Total" oninput="calcExpense('bardana', 'total')">
+                </div>
+                <div class="expense-col"><label>Kanta <span id="kantaLiveTotal" class="live-total-text"></span></label>
+                    <input type="number" id="kantaRateInput" class="nav-item" placeholder="₹ Rate"
+                        oninput="calcExpense('kanta', 'rate')">
+                    <input type="number" id="kantaTotalInput" class="nav-item expense-total-input" placeholder="₹ Total"
+                        oninput="calcExpense('kanta', 'total')">
+                </div>
+                <div class="expense-col"><label>Thelibhada <span id="thilibhadaLiveTotal"
+                            class="live-total-text"></span></label>
+                    <input type="number" id="thilibhadaRateInput" class="nav-item" placeholder="₹ Rate"
+                        oninput="calcExpense('thilibhada', 'rate')">
+                    <input type="number" id="thilibhadaTotalInput" class="nav-item expense-total-input"
+                        placeholder="₹ Total" oninput="calcExpense('thilibhada', 'total')">
+                </div>
+                <div class="expense-col"><label>Muddat <span id="muddatLiveTotal"
+                            class="live-total-text"></span></label>
+                    <input type="number" id="muddatRateInput" class="nav-item" placeholder="% Rate" step="0.01"
+                        oninput="calcExpense('muddat', 'rate')">
+                    <input type="number" id="muddatTotalInput" class="nav-item expense-total-input"
+                        placeholder="₹ Total" oninput="calcExpense('muddat', 'total')">
+                </div>
+                <div class="expense-col">
+                    <label><input type="text" id="extraNameInput" class="nav-item extra-name-input"
+                            placeholder="Any Other Expense..."></label>
+                    <input type="number" id="extraRateInput" class="nav-item" placeholder="₹ Rate"
+                        oninput="calcExpense('extra', 'rate')">
+                    <input type="number" id="extraTotalInput" class="nav-item expense-total-input" placeholder="₹ Total"
+                        oninput="calcExpense('extra', 'total')">
+                </div>
+            </div>
+
+            <div style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
+
+            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="form-group"><label>5. Transport</label><input list="transportList" id="transportInput"
+                        class="nav-item" placeholder="Transport ka naam"
+                        onchange="checkAndAddMaster(this, 'transport', 'Transport')"></div>
+                <div class="form-group"><label>💰 Total Amount (Mal + Sabhi Kharche)</label><input type="text"
+                        id="totalAmountInput" class="total-input" readonly placeholder="₹ 0.00"></div>
+                <div class="form-group" style="justify-content: flex-end;"><button id="saveBtn"
+                        class="btn-submit nav-item" onclick="saveTransaction()">💾 Sauda Save Karein</button></div>
+            </div>
+        </div>
+
+        <!-- TABLE SECTION -->
+        <div class="card">
+            <div class="card-header">📊 Pura Hisab (Ledger)</div>
+
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search (Party ya Item)..."
+                    oninput="filterTable()">
+                <select id="filterType" class="filter-select" onchange="filterTable()">
+                    <option value="all">Sabhi Saude</option>
+                    <option value="dalali_baki">⏳ Sirf Dalali Baki</option>
+                    <option value="dalali_aayi">✅ Sirf Dalali Aayi</option>
+                    <option value="payment_baki">⏳ Sirf Hisab Baki</option>
+                    <option value="payment_done">✅ Sirf Hisab Chukta</option>
+                </select>
+            </div>
+
+            <div class="multi-filter-box">
+                <div><label>From Date:</label><input type="date" id="fromDateFilter" onchange="filterTable()"></div>
+                <div><label>To Date:</label><input type="date" id="toDateFilter" onchange="filterTable()"></div>
+                <div><label>Kharidar (Buyer):</label><select id="buyerFilter" onchange="filterTable()">
+                        <option value="">-- Sabhi --</option>
+                    </select></div>
+                <div><label>Supplier (Seller):</label><select id="supplierFilter" onchange="filterTable()">
+                        <option value="">-- Sabhi --</option>
+                    </select></div>
+                <div><label>Item:</label><select id="itemFilter" onchange="filterTable()">
+                        <option value="">-- Sabhi --</option>
+                    </select></div>
+                <div><button class="btn-clear" onclick="clearFilters()">❌ Clear Filters</button></div>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Jisko Becha</th>
+                            <th>Jisse Kharida</th>
+                            <th>Item (Lot)</th>
+                            <th>Qty</th>
+                            <th>Net Wajan</th>
+                            <th>Bhav (₹)</th>
+                            <th>Total Amount</th>
+                            <th style="color: #3498db;">Dalali (1%)</th>
+                            <th>Mal Ka Hisab</th>
+                            <th>Actions (View/Edit)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                    <tfoot id="tableFoot"></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW ENTRY MODAL -->
+    <div id="viewModal" class="modal">
+        <!-- Buttons ab Parchi ke bahar aur alag-alag hain -->
+        <div
+            style="width: 90%; max-width: 500px; margin: 2% auto; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <div style="display: flex; gap: 10px;">
+                <button onclick="window.print()"
+                    style="background: #34495e; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 14px;">🖨️
+                    Print</button>
+                <button id="shareBtnElement" onclick="shareParchi(event)"
+                    style="background: #25D366; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 14px;">📲
+                    WhatsApp</button>
+            </div>
+            <span onclick="closeModal('viewModal')"
+                style="color: #fff; font-size: 35px; font-weight: bold; cursor: pointer; background: red; border-radius: 50%; width: 40px; height: 40px; text-align: center; line-height: 35px;">&times;</span>
+        </div>
+
+        <!-- Asli Parchi jiska Screenshot banega -->
+        <div class="modal-content" id="parchiCaptureArea" style="margin: 0 auto; margin-bottom: 20px;">
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+
+
+    <!-- MASTER MANAGEMENT MODAL -->
+    <div id="masterModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('masterModal')">&times;</span>
+            <h2 style="text-align:center; color:#8e44ad; margin-top:0;">⚙️ Master List Manage Karein</h2>
+
+            <div class="master-section">
+                <h3>👥 Party List (Kharidar/Supplier)</h3>
+                <div id="partyMasterList"></div>
+            </div>
+            <div class="master-section">
+                <h3>🌾 Item List (Mal)</h3>
+                <div id="itemMasterList"></div>
+            </div>
+            <div class="master-section">
+                <h3>🚚 Transport List</h3>
+                <div id="transportMasterList"></div>
+            </div>
+        </div>
+    </div>
+
+    <datalist id="partyList"></datalist>
+    <datalist id="itemList"></datalist>
+    <datalist id="transportList"></datalist>
+
+    <script>
+        // 🔴 YAHAN APNA FIREBASE CONFIG DALEIN JO FIREBASE WEBSITE SE MILA HAI 🔴
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXvZwgzo_B45LUNuhv5Kohf_WfEKwENdk",
+            authDomain: "broker-7e6ef.firebaseapp.com",
+            projectId: "broker-7e6ef",
+            storageBucket: "broker-7e6ef.firebasestorage.app",
+            messagingSenderId: "104366074094",
+            appId: "1:104366074094:web:3dc01b8af70d9791982bff"
+        };
+
+        // Firebase chalu karna
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let masters = {
+            party: ["Amit Traders", "Ramesh & Sons", "Kisan Godown"],
+            item: ["Gehu (Wheat)", "Chana", "Sarson"],
+            transport: ["Jai Hind Transport"]
+        };
+        let transactions = [];
+        let currentEditId = null;
+
+        // --- NAYA: FIREBASE REALTIME SYNC ---
+        window.onload = function () {
+            document.getElementById('dateInput').valueAsDate = new Date();
+
+            // Masters ko database se lana
+            db.collection("settings").doc("masters").onSnapshot((doc) => {
+                if (doc.exists) {
+                    masters = doc.data();
+                } else {
+                    db.collection("settings").doc("masters").set(masters); // Agar nahi hai to default save karein
+                }
+                updateDatalists();
+            });
+
+            // Saudo (Transactions) ko database se lana (Realtime)
+            db.collection("transactions").onSnapshot((querySnapshot) => {
+                transactions = [];
+                querySnapshot.forEach((doc) => {
+                    let data = doc.data();
+                    data.id = doc.id; // Firebase ID
+                    transactions.push(data);
+                });
+                // Date ke hisab se ulta set karein (Naya sauda upar)
+                transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+                filterTable();
+            });
+        };
+
+        function saveMastersLocally() {
+            db.collection("settings").doc("masters").set(masters);
+        }
+
+        // --- BAKAAI PURANA LOGIC (Same to Same) ---
+        function toggleForm() {
+            let form = document.getElementById('entryFormCard');
+            let btn = document.getElementById('mobileAddFormBtn');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                btn.innerHTML = "➖";
+                btn.style.backgroundColor = "#e74c3c";
+            } else {
+                form.style.display = 'none';
+                btn.innerHTML = "➕";
+                btn.style.backgroundColor = "#27ae60";
+            }
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                let navItems = Array.from(document.querySelectorAll('.nav-item'));
+                let currentIndex = navItems.indexOf(document.activeElement);
+                if (currentIndex > -1) {
+                    event.preventDefault();
+                    if (event.shiftKey) {
+                        if (currentIndex > 0) { navItems[currentIndex - 1].focus(); if (navItems[currentIndex - 1].tagName === 'INPUT') navItems[currentIndex - 1].select(); }
+                    } else {
+                        if (currentIndex < navItems.length - 1) { navItems[currentIndex + 1].focus(); if (navItems[currentIndex + 1].tagName === 'INPUT') navItems[currentIndex + 1].select(); }
+                        else if (navItems[currentIndex].tagName === 'BUTTON') { navItems[currentIndex].click(); }
+                    }
+                }
+            }
+        });
+
+        function generateBoxes() {
+            let bharti = parseFloat(document.getElementById('bhartiInput').value) || 0;
+            let qty = parseInt(document.getElementById('qtyInput').value) || 0;
+            let wrapper = document.getElementById('dynamicBoxesWrapper');
+            let container = document.getElementById('boxesContainer');
+            container.innerHTML = "";
+            if (qty > 0 && bharti > 0) {
+                wrapper.style.display = "block";
+                for (let i = 1; i <= qty; i++) {
+                    let box = document.createElement("input"); box.type = "number"; box.value = bharti; box.className = "nav-item box-input-item"; box.title = `Bag No. ${i}`; box.oninput = sumAllBoxes; container.appendChild(box);
+                }
+            } else { wrapper.style.display = "none"; }
+            sumAllBoxes();
+        }
+
+        function sumAllBoxes() {
+            let boxes = document.querySelectorAll('.box-input-item');
+            let qty = parseFloat(document.getElementById('qtyInput').value) || 0;
+            let lessPerBag = parseFloat(document.getElementById('lessWeightInput').value) || 0;
+            let totalGrossWeight = 0;
+            if (boxes.length > 0) { boxes.forEach(box => { totalGrossWeight += parseFloat(box.value) || 0; }); } else { totalGrossWeight = qty; }
+            let totalLess = lessPerBag * qty;
+            let netWeight = totalGrossWeight - totalLess;
+            if (netWeight > 0) document.getElementById('weightInput').value = netWeight; else document.getElementById('weightInput').value = "";
+            recalcAllExpenses();
+        }
+
+        function calcExpense(expenseName, changedType) {
+            let qty = parseFloat(document.getElementById('qtyInput').value) || 0;
+            let weight = parseFloat(document.getElementById('weightInput').value) || 0;
+            let malRate = parseFloat(document.getElementById('rateInput').value) || 0;
+            let malAmount = weight * malRate;
+            let rateInput = document.getElementById(expenseName + 'RateInput');
+            let totalInput = document.getElementById(expenseName + 'TotalInput');
+            let liveTotalSpan = document.getElementById(expenseName + 'LiveTotal');
+
+            if (expenseName === 'muddat') {
+                if (changedType === 'rate') { let pct = parseFloat(rateInput.value) || 0; let tot = (malAmount * pct) / 100; totalInput.value = tot > 0 ? tot.toFixed(2) : ''; }
+                else { let tot = parseFloat(totalInput.value) || 0; if (malAmount > 0) { let pct = (tot * 100) / malAmount; rateInput.value = pct > 0 ? pct.toFixed(2) : ''; } else rateInput.value = ''; }
+            } else {
+                if (changedType === 'rate') { let r = parseFloat(rateInput.value) || 0; let tot = r * qty; totalInput.value = tot > 0 ? tot.toFixed(2) : ''; }
+                else { let tot = parseFloat(totalInput.value) || 0; if (qty > 0) { let r = tot / qty; rateInput.value = r > 0 ? r.toFixed(2) : ''; } else rateInput.value = ''; }
+            }
+            if (liveTotalSpan) { let currentTot = parseFloat(totalInput.value) || 0; liveTotalSpan.innerText = currentTot > 0 ? `(Total: ₹${currentTot})` : ''; }
+            calculateFinalAmount();
+        }
+
+        function recalcAllExpenses() {
+            ['bardana', 'kanta', 'thilibhada', 'muddat', 'extra'].forEach(exp => {
+                let rInput = document.getElementById(exp + 'RateInput'); let tInput = document.getElementById(exp + 'TotalInput');
+                if (rInput.value !== "") calcExpense(exp, 'rate'); else if (tInput.value !== "") calcExpense(exp, 'total');
+            });
+            calculateFinalAmount();
+        }
+
+        function calculateFinalAmount() {
+            let weight = parseFloat(document.getElementById('weightInput').value) || 0;
+            let malRate = parseFloat(document.getElementById('rateInput').value) || 0;
+            let malAmount = weight * malRate;
+            let bTot = parseFloat(document.getElementById('bardanaTotalInput').value) || 0;
+            let kTot = parseFloat(document.getElementById('kantaTotalInput').value) || 0;
+            let tTot = parseFloat(document.getElementById('thilibhadaTotalInput').value) || 0;
+            let mTot = parseFloat(document.getElementById('muddatTotalInput').value) || 0;
+            let eTot = parseFloat(document.getElementById('extraTotalInput').value) || 0;
+            let extraKharcha = bTot + kTot + tTot + mTot + eTot;
+            let total = malAmount + extraKharcha;
+            if (total > 0) document.getElementById('totalAmountInput').value = "₹ " + total.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+            else document.getElementById('totalAmountInput').value = "";
+        }
+
+        function checkAndAddMaster(inputElement, type, labelName) {
+            let val = inputElement.value.trim();
+            if (val !== "" && !masters[type].includes(val)) {
+                if (confirm(`'${val}' naya hai. Kya Master list mein jodna chahte hain?`)) {
+                    masters[type].push(val); saveMastersLocally();
+                }
+            }
+        }
+        function fillFilterSelect(selectId, dataArray) {
+            let select = document.getElementById(selectId); if (!select || !dataArray) return;
+            select.innerHTML = '<option value="">-- Sabhi --</option>';
+            dataArray.forEach(item => { select.innerHTML += `<option value="${item}">${item}</option>`; });
+        }
+        function updateDatalists() {
+            fillDatalist('partyList', masters.party); fillDatalist('itemList', masters.item); fillDatalist('transportList', masters.transport);
+            fillFilterSelect('buyerFilter', masters.party); fillFilterSelect('supplierFilter', masters.party); fillFilterSelect('itemFilter', masters.item);
+        }
+        function fillDatalist(listId, dataArray) {
+            let dataList = document.getElementById(listId); if (!dataList) return;
+            dataList.innerHTML = ""; dataArray.forEach(item => { dataList.innerHTML += `<option value="${item}">`; });
+        }
+
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        window.onclick = function (event) {
+            let viewM = document.getElementById('viewModal'); let masterM = document.getElementById('masterModal');
+            if (event.target == viewM) viewM.style.display = "none"; if (event.target == masterM) masterM.style.display = "none";
+        }
+
+        function openMasterModal() {
+            renderMasterList('partyMasterList', 'party'); renderMasterList('itemMasterList', 'item'); renderMasterList('transportMasterList', 'transport');
+            document.getElementById('masterModal').style.display = 'block';
+        }
+        function renderMasterList(containerId, type) {
+            let container = document.getElementById(containerId); container.innerHTML = "";
+            masters[type].forEach((val, index) => {
+                container.innerHTML += `<div class="master-list-item"><span>${val}</span><div>
+                <button class="action-btn btn-edit" onclick="editMasterItem('${type}', ${index})">✏️ Edit</button>
+                <button class="action-btn btn-pending" onclick="deleteMasterItem('${type}', ${index})">🗑️ Delete</button></div></div>`;
+            });
+        }
+        function editMasterItem(type, index) {
+            let oldVal = masters[type][index]; let newVal = prompt("Naya naam likhein:", oldVal);
+            if (newVal && newVal.trim() !== "" && newVal !== oldVal) {
+                masters[type][index] = newVal.trim(); saveMastersLocally(); renderMasterList(type + 'MasterList', type);
+                // Firebase me saare purane name update karna
+                if (confirm("Kya purane saudo mein bhi yeh naam badalna hai?")) {
+                    transactions.forEach(t => {
+                        let updated = false;
+                        if (type === 'party') { if (t.buyer === oldVal) { t.buyer = newVal; updated = true; } if (t.supplier === oldVal) { t.supplier = newVal; updated = true; } }
+                        if (type === 'item') { if (t.item === oldVal) { t.item = newVal; updated = true; } }
+                        if (type === 'transport') { if (t.transport === oldVal) { t.transport = newVal; updated = true; } }
+                        if (updated) db.collection("transactions").doc(t.id).update(t);
+                    });
+                }
+            }
+        }
+        function deleteMasterItem(type, index) {
+            if (confirm("Pakka is naam ko list se hatana hai?")) { masters[type].splice(index, 1); saveMastersLocally(); renderMasterList(type + 'MasterList', type); }
+        }
+
+        // --- NAYA: FIREBASE SAVE DATA ---
+        function saveTransaction() {
+            let date = document.getElementById('dateInput').value;
+            let buyer = document.getElementById('buyerInput').value;
+            let supplier = document.getElementById('supplierInput').value;
+            let item = document.getElementById('itemInput').value;
+            let lot = document.getElementById('lotInput').value;
+            let bhartiVal = document.getElementById('bhartiInput').value;
+            let qty = parseFloat(document.getElementById('qtyInput').value);
+            let lessWeight = parseFloat(document.getElementById('lessWeightInput').value) || 0;
+            let weight = parseFloat(document.getElementById('weightInput').value);
+            let rate = parseFloat(document.getElementById('rateInput').value);
+            let transport = document.getElementById('transportInput').value;
+
+            if (!buyer || !supplier || !item || isNaN(qty) || isNaN(weight) || isNaN(rate)) { alert("Kripya zaruri details bharein!"); return; }
+
+            let malAmount = weight * rate;
+            let bardanaRate = parseFloat(document.getElementById('bardanaRateInput').value) || 0; let bardanaTotal = parseFloat(document.getElementById('bardanaTotalInput').value) || 0;
+            let kantaRate = parseFloat(document.getElementById('kantaRateInput').value) || 0; let kantaTotal = parseFloat(document.getElementById('kantaTotalInput').value) || 0;
+            let thilibhadaRate = parseFloat(document.getElementById('thilibhadaRateInput').value) || 0; let thilibhadaTotal = parseFloat(document.getElementById('thilibhadaTotalInput').value) || 0;
+            let muddatPercent = parseFloat(document.getElementById('muddatRateInput').value) || 0; let muddatTotal = parseFloat(document.getElementById('muddatTotalInput').value) || 0;
+            let extraName = document.getElementById('extraNameInput').value || 'Extra'; let extraRate = parseFloat(document.getElementById('extraRateInput').value) || 0; let extraTotal = parseFloat(document.getElementById('extraTotalInput').value) || 0;
+            let totalKharcha = bardanaTotal + kantaTotal + thilibhadaTotal + muddatTotal + extraTotal;
+
+            let boxInputs = document.querySelectorAll('.box-input-item'); let boxWeightsArray = []; let grossWeight = 0;
+            boxInputs.forEach(b => { let bw = parseFloat(b.value) || 0; boxWeightsArray.push(bw); grossWeight += bw; });
+            if (boxWeightsArray.length === 0) grossWeight = qty;
+
+            let totalAmount = malAmount + totalKharcha; let dalali = totalAmount * 0.01;
+
+            let entryData = {
+                date, buyer, supplier, item, lot, bharti: bhartiVal, qty, lessWeight, grossWeight, weight, rate, malAmount,
+                bardanaRate, bardanaTotal, kantaRate, kantaTotal, thilibhadaRate, thilibhadaTotal, muddatPercent, muddatTotal, extraName, extraRate, extraTotal,
+                totalKharcha, totalAmount, dalali, transport, boxWeights: boxWeightsArray
+            };
+
+            if (currentEditId === null) {
+                entryData.isReceived = false; entryData.paymentDone = false; entryData.paymentDate = "";
+                db.collection("transactions").add(entryData); // Firebase Par Naya Sauda Save
+            } else {
+                db.collection("transactions").doc(currentEditId).update(entryData); // Firebase Par Update
+                currentEditId = null;
+                let btn = document.getElementById('saveBtn'); btn.innerHTML = "💾 Sauda Save Karein"; btn.style.backgroundColor = "#27ae60";
+            }
+
+            clearForm();
+            if (window.innerWidth <= 768) { document.getElementById('entryFormCard').style.display = 'none'; document.getElementById('mobileAddFormBtn').innerHTML = "➕"; document.getElementById('mobileAddFormBtn').style.backgroundColor = "#27ae60"; }
+        }
+
+        function clearForm() {
+            ['buyer', 'supplier', 'item', 'lot', 'bharti', 'qty', 'lessWeight', 'weight', 'rate', 'bardanaRate', 'bardanaTotal', 'kantaRate', 'kantaTotal', 'thilibhadaRate', 'thilibhadaTotal', 'muddatRate', 'muddatTotal', 'extraName', 'extraRate', 'extraTotal', 'transport', 'totalAmount'].forEach(id => { let el = document.getElementById(id + 'Input'); if (el) el.value = ''; });
+            ['bardana', 'kanta', 'thilibhada', 'muddat'].forEach(exp => { let l = document.getElementById(exp + 'LiveTotal'); if (l) l.innerText = ''; });
+            document.getElementById('dynamicBoxesWrapper').style.display = "none"; document.getElementById('boxesContainer').innerHTML = ""; document.getElementById('buyerInput').focus();
+        }
+
+        function editEntry(id) {
+            let t = transactions.find(x => x.id === id); if (!t) return;
+            if (window.innerWidth <= 768) { document.getElementById('entryFormCard').style.display = 'block'; document.getElementById('mobileAddFormBtn').innerHTML = "➖"; document.getElementById('mobileAddFormBtn').style.backgroundColor = "#e74c3c"; }
+            currentEditId = id; document.getElementById('dateInput').value = t.date; document.getElementById('buyerInput').value = t.buyer; document.getElementById('supplierInput').value = t.supplier; document.getElementById('itemInput').value = t.item; document.getElementById('lotInput').value = t.lot || ''; document.getElementById('bhartiInput').value = t.bharti || ''; document.getElementById('qtyInput').value = t.qty; document.getElementById('lessWeightInput').value = t.lessWeight || '';
+
+            generateBoxes();
+            if (t.boxWeights && t.boxWeights.length > 0) { let boxes = document.querySelectorAll('.box-input-item'); boxes.forEach((box, index) => { if (t.boxWeights[index] !== undefined) box.value = t.boxWeights[index]; }); }
+
+            document.getElementById('weightInput').value = t.weight; document.getElementById('rateInput').value = t.rate; document.getElementById('bardanaRateInput').value = t.bardanaRate || ''; document.getElementById('bardanaTotalInput').value = t.bardanaTotal || ''; document.getElementById('kantaRateInput').value = t.kantaRate || ''; document.getElementById('kantaTotalInput').value = t.kantaTotal || ''; document.getElementById('thilibhadaRateInput').value = t.thilibhadaRate || ''; document.getElementById('thilibhadaTotalInput').value = t.thilibhadaTotal || ''; document.getElementById('muddatRateInput').value = t.muddatPercent || ''; document.getElementById('muddatTotalInput').value = t.muddatTotal || ''; let eName = t.extraName === 'Extra' ? '' : (t.extraName || ''); document.getElementById('extraNameInput').value = eName; document.getElementById('extraRateInput').value = t.extraRate || ''; document.getElementById('extraTotalInput').value = t.extraTotal || ''; document.getElementById('transportInput').value = t.transport || '';
+
+            recalcAllExpenses(); window.scrollTo({ top: 0, behavior: 'smooth' });
+            let btn = document.getElementById('saveBtn'); btn.innerHTML = "🔄 Sauda Update Karein"; btn.style.backgroundColor = "#e67e22";
+        }
+
+        function formatDateDDMMYY(dateStr) {
+            if (!dateStr) return ''; let p = dateStr.split('-'); if (p.length === 3) return p[2] + '-' + p[1] + '-' + p[0].slice(-2); return dateStr;
+        }
+
+        function viewEntry(id) {
+            let t = transactions.find(x => x.id === id); if (!t) return;
+            let formattedDate = formatDateDDMMYY(t.date);
+            let boxDetailsHtml = '';
+            if (t.boxWeights && t.boxWeights.length > 0) {
+                let weightCounts = {}; t.boxWeights.forEach(w => { weightCounts[w] = (weightCounts[w] || 0) + 1; });
+                let groupedHtml = Object.keys(weightCounts).map(w => { let count = weightCounts[w]; let bagText = count > 1 ? 'Bags' : 'Bag'; return `<span class="bag-weight-item"><strong>${count}</strong> ${bagText} × <strong>${w} kg</strong></span>`; }).join('');
+                boxDetailsHtml = `<div class="bag-weight-box"><div style="margin-bottom: 5px;"><strong>Weight Details:</strong></div><div style="display: flex; flex-wrap: wrap;">${groupedHtml}</div></div>`;
+            }
+            let lessWeightHtml = ''; if (t.lessWeight > 0) { lessWeightHtml = `<div class="receipt-row" style="color:#d35400;"><span>Katoti (Less):</span> <span>- ${t.lessWeight} KG × ${t.qty} = <strong>${parseFloat((t.lessWeight * t.qty).toFixed(2))} KG</strong></span></div>`; }
+            let extraName = t.extraName === 'Extra' || !t.extraName ? 'Extra Kharcha' : t.extraName;
+            let extraLine = t.extraTotal > 0 ? ` | ${extraName}: ₹${parseFloat(t.extraTotal.toFixed(2))}` : '';
+
+            let modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+            <div class="receipt-header"><h2 style="margin:0; font-size: 22px; color:#2c3e50; text-align:left;">${t.buyer}</h2><span style="color:#7f8c8d; font-weight:bold; font-size:16px;">${formattedDate}</span></div>
+            <div class="receipt-row"><span><strong>Item:</strong></span> <span>${t.item} ${t.lot ? '(Lot: ' + t.lot + ')' : ''} <strong>| ${t.qty} Bags</strong></span></div>
+            ${boxDetailsHtml}
+            <div class="receipt-row"><span>Gross Wajan:</span> <span>${t.grossWeight} KG</span></div>
+            ${lessWeightHtml}
+            <div class="receipt-row"><span>Net Wajan:</span> <span><strong style="color:#2c3e50; font-size:16px;">${t.weight} KG</strong></span></div>
+            <div class="receipt-row"><span>Bhav (Rate):</span> <span>₹${t.rate} /KG</span></div>
+            <div class="receipt-row"><span>Mal ka Amount:</span> <span>₹${t.malAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+            <div class="receipt-row" style="margin-top:10px; border-top:1px dotted #ccc; padding-top:10px; color:#c0392b;"><span><strong>Extra Kharche:</strong></span> <span>₹${t.totalKharcha.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+            <div style="font-size:12px; color:#7f8c8d; text-align:right;">(Bardana: ₹${parseFloat(t.bardanaTotal.toFixed(2))}) <br>(Kanta: ₹${parseFloat(t.kantaTotal.toFixed(2))}) <br>(Bhada: ₹${parseFloat(t.thilibhadaTotal.toFixed(2))}) <br>(Muddat ${t.muddatPercent}%: ₹${parseFloat(t.muddatTotal.toFixed(2))}) ${extraLine}</div>
+            <div class="receipt-row" style="margin-top:10px; border-top:2px solid #333; padding-top:10px; font-size:18px; color:green;"><span><strong>Total Amount:</strong></span> <span><strong>₹${t.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></span></div>
+            <div class="receipt-row" style="margin-top:10px; font-size:13px;"><span><strong>Transport:</strong></span> <span>${t.transport || '-'}</span></div>
+        `;
+            document.getElementById('viewModal').style.display = 'block';
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = ''; document.getElementById('filterType').value = 'all'; document.getElementById('fromDateFilter').value = ''; document.getElementById('toDateFilter').value = ''; document.getElementById('buyerFilter').value = ''; document.getElementById('supplierFilter').value = ''; document.getElementById('itemFilter').value = ''; filterTable();
+        }
+
+        // --- NAYA: FIREBASE UPDATE CALLS ---
+        function toggleDalaliStatus(id) {
+            let txn = transactions.find(t => t.id === id);
+            if (txn) {
+                if (!txn.isReceived) {
+                    if (confirm("Kya confirm karte hain ki dalali aa gayi hai?")) db.collection("transactions").doc(id).update({ isReceived: true });
+                } else {
+                    if (confirm("Kya aap ise wapas 'Baki' karna chahte hain?")) {
+                        if (confirm("Dhyan dein! Yeh dalali pehle AA CHUKI thi. Pakka wapas BAKI karna hai?")) db.collection("transactions").doc(id).update({ isReceived: false });
+                    }
+                }
+            }
+        }
+
+        function togglePaymentStatus(id) {
+            let txn = transactions.find(t => t.id === id);
+            if (txn) {
+                if (!txn.paymentDone) {
+                    if (confirm(`Kya ${txn.buyer} se paise aakar ${txn.supplier} ko HISAB CHUKTA kar diya gaya hai?`)) {
+                        let today = new Date(); let pDate = today.getDate() + "/" + (today.getMonth() + 1) + "/" + today.getFullYear();
+                        db.collection("transactions").doc(id).update({ paymentDone: true, paymentDate: pDate });
+                    }
+                } else {
+                    if (confirm(`Kya confirm karte hain ki Hisab wapas 'BAKI' karna hai?`)) db.collection("transactions").doc(id).update({ paymentDone: false, paymentDate: "" });
+                }
+            }
+        }
+
+        function filterTable() {
+            let searchText = document.getElementById('searchInput').value.toLowerCase().trim(); let filterType = document.getElementById('filterType').value; let fromDate = document.getElementById('fromDateFilter').value; let toDate = document.getElementById('toDateFilter').value; let fBuyer = document.getElementById('buyerFilter').value; let fSupplier = document.getElementById('supplierFilter').value; let fItem = document.getElementById('itemFilter').value;
+
+            let filteredData = transactions.filter(t => {
+                if (filterType === 'dalali_baki' && t.isReceived) return false; if (filterType === 'dalali_aayi' && !t.isReceived) return false; if (filterType === 'payment_baki' && t.paymentDone) return false; if (filterType === 'payment_done' && !t.paymentDone) return false;
+                if (fromDate && t.date < fromDate) return false; if (toDate && t.date > toDate) return false; if (fBuyer && (t.buyer || "") !== fBuyer) return false; if (fSupplier && (t.supplier || "") !== fSupplier) return false; if (fItem && (t.item || "") !== fItem) return false;
+                if (searchText !== "") { let matchBuyer = (t.buyer || "").toLowerCase().includes(searchText); let matchSupplier = (t.supplier || "").toLowerCase().includes(searchText); let matchItem = (t.item || "").toLowerCase().includes(searchText); if (!matchBuyer && !matchSupplier && !matchItem) return false; }
+                return true;
+            });
+            renderTable(filteredData);
+        }
+
+        function renderTable(dataArray) {
+            let tbody = document.getElementById('tableBody'); let tfoot = document.getElementById('tableFoot'); tbody.innerHTML = ""; tfoot.innerHTML = "";
+            if (dataArray.length === 0) { tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 20px; color: #7f8c8d;">Koi sauda nahi mila</td></tr>`; return; }
+
+            let totalQty = 0, totalWeightCount = 0, grandTotal = 0, totalDalaliAmount = 0, dalaliReceivedAmount = 0, dalaliPendingAmount = 0;
+
+            dataArray.forEach(t => {
+                totalQty += t.qty; totalWeightCount += t.weight; grandTotal += t.totalAmount; totalDalaliAmount += t.dalali;
+                if (t.isReceived) dalaliReceivedAmount += t.dalali; else dalaliPendingAmount += t.dalali;
+
+                // Note: Use '${t.id}' to handle Firebase String IDs correctly
+                let row = `<tr>
+                <td data-label="📅 Date:">${formatDateDDMMYY(t.date)}</td>
+                <td data-label="👤 Jisko Becha:"><strong>${t.buyer}</strong></td>
+                <td data-label="🏭 Jisse Kharida:">${t.supplier}</td>
+                <td data-label="🌾 Item (Lot):">${t.item} <br><small>(Lot: ${t.lot || '-'})</small></td>
+                <td data-label="📦 Qty:">${t.qty}</td>
+                <td data-label="⚖️ Net Wajan:"><strong>${parseFloat(t.weight.toFixed(2))}</strong></td>
+                <td data-label="📈 Bhav (₹):">₹${t.rate}</td>
+                <td data-label="💰 Total Amount:" style="color:green; font-weight:bold;">₹${t.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+                <td data-label="💸 Dalali (1%):" style="color:#2980b9; font-weight:bold;">₹${t.dalali.toLocaleString('en-IN', { maximumFractionDigits: 2 })}<br><button class="action-btn ${t.isReceived ? 'btn-received' : 'btn-pending'}" onclick="toggleDalaliStatus('${t.id}')" style="width:100px; margin-top:5px;">${t.isReceived ? '✅ Aayi' : '⏳ Baki'}</button></td>
+                <td data-label="📝 Mal Ka Hisab:"><button class="action-btn ${t.paymentDone ? 'btn-payment-done' : 'btn-payment-pending'}" onclick="togglePaymentStatus('${t.id}')" style="width:100px;">${t.paymentDone ? '✅ Chukta' : '⏳ Baki'}</button>${t.paymentDone ? `<br><small style="color:gray">${t.paymentDate}</small>` : ''}</td>
+                <td data-label="⚙️ Actions:" style="display:flex; gap:10px; justify-content:flex-end;"><button class="action-btn btn-view" onclick="viewEntry('${t.id}')" style="width:50px;">👁️ View</button><button class="action-btn btn-edit" onclick="editEntry('${t.id}')" style="width:50px;">✏️ Edit</button></td>
+            </tr>`;
+                tbody.innerHTML += row;
+            });
+
+            tfoot.innerHTML = `<tr>
+            <td data-label="YOG" colspan="4" class="hide-mobile" style="text-align:right; font-size:14px;"><strong>KUL YOG:</strong></td>
+            <td data-label="📦 Kul Qty:" style="font-size:14px;"><strong>${totalQty}</strong></td>
+            <td data-label="⚖️ Kul Wajan:" style="font-size:14px; color:#d35400;"><strong>${parseFloat(totalWeightCount.toFixed(2))}</strong></td>
+            <td class="hide-mobile"></td>
+            <td data-label="💰 Kul Amount:" style="color:green; font-size:15px;"><strong>₹${grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></td>
+            <td data-label="📊 Dalali Report:" colspan="2" style="font-size: 13px;"><span style="color:#2980b9"><strong>Kul Dalali: ₹${totalDalaliAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></span><br><span style="color:#27ae60">Aayi: ₹${dalaliReceivedAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span> | <span style="color:#c0392b">Baki: ₹${dalaliPendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></td>
+            <td class="hide-mobile"></td>
+        </tr>`;
+        }
+
+        // --- NAYA FUNCTION: BINA GALLERY MEIN SAVE KIYE SHARE KARNA ---
+        function shareParchi(event) {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+
+            let shareBtn = document.getElementById('shareBtnElement');
+            let originalText = shareBtn.innerHTML;
+
+            shareBtn.innerHTML = "⏳ Wait...";
+            shareBtn.style.backgroundColor = "#f39c12";
+
+            let captureArea = document.getElementById('parchiCaptureArea');
+
+            html2canvas(captureArea, { scale: 2, backgroundColor: '#ffffff', useCORS: true }).then(canvas => {
+                canvas.toBlob(function (blob) {
+                    let file = new File([blob], "Sauda_Parchi.png", { type: "image/png" });
+
+                    // Check karega ki phone me share support hai ya nahi
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({
+                            title: 'Sauda Parchi',
+                            files: [file]
+                        }).then(() => {
+                            shareBtn.innerHTML = originalText;
+                            shareBtn.style.backgroundColor = "#25D366";
+                        }).catch(err => {
+                            // Agar user back kar de
+                            shareBtn.innerHTML = originalText;
+                            shareBtn.style.backgroundColor = "#25D366";
+                        });
+                    } else {
+                        // Ab download nahi hoga, sirf message aayega
+                        alert("Aapka browser direct image share support nahi karta. Kripya Google Chrome ka istemal karein.");
+                        shareBtn.innerHTML = originalText;
+                        shareBtn.style.backgroundColor = "#25D366";
+                    }
+                }, 'image/png');
+            });
+        }
+    </script>
+</body>
+
+</html>
+
+</body>
+
+</html>
