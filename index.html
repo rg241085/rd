@@ -7,6 +7,7 @@
     <title>Advance Dalali & Trading Hisab</title>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -603,11 +604,28 @@
 </head>
 
 <body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen"
+        style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #2c3e50;">
+        <h2 style="color: white; margin-bottom: 20px;">🔒 RD Jaipur - Secure Login</h2>
+        <div
+            style="background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 320px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+            <input type="email" id="emailInput" placeholder="Email daalein" style="margin-bottom: 15px; width: 100%;">
+            <input type="password" id="passwordInput" placeholder="Password daalein"
+                style="margin-bottom: 15px; width: 100%;">
+            <button onclick="loginUser()" class="btn-submit" style="width: 100%;">Login Karein</button>
+            <p id="errorMsg" style="color: red; font-size: 13px; text-align: center; margin-top: 10px; display: none;">
+            </p>
+        </div>
+    </div>
 
-    <div class="container">
+    <!-- MAIN APP -->
+    <div class="container" id="mainApp" style="display: none;">
         <h1>RD Jaipur</h1>
 
         <div class="header-actions">
+            <!-- Logout Button -->
+            <button onclick="logoutUser()" class="btn-manage-masters" style="background: #e74c3c;">🚪 Logout</button>
             <button id="mobileAddFormBtn" onclick="toggleForm()"
                 style="border-radius: 50%; width: 45px; height: 45px; font-size: 20px; padding: 0;"
                 title="Naya Sauda">➕</button>
@@ -620,7 +638,6 @@
 
             <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                 <div class="form-group"><label>1. Date</label><input type="date" id="dateInput" class="nav-item"></div>
-                <!-- NAYA: onchange par onBuyerChange function chalega -->
                 <div class="form-group"><label>2. Jisko Mal Becha (Buyer)</label><input list="partyList" id="buyerInput"
                         class="nav-item" placeholder="Naam chunein" onchange="onBuyerChange(this)"></div>
                 <div class="form-group"><label>3. Jisse Kharida (Supplier)</label><input list="partyList"
@@ -701,7 +718,8 @@
                 <div class="form-group"><label>💰 Total Amount (Mal + Sabhi Kharche)</label><input type="text"
                         id="totalAmountInput" class="total-input" readonly placeholder="₹ 0.00"></div>
                 <div class="form-group" style="justify-content: flex-end;"><button id="saveBtn"
-                        class="btn-submit nav-item" onclick="saveTransaction()">💾 Sauda Save Karein</button></div>
+                        class="btn-submit nav-item" onclick="saveTransaction()">💾 Sauda Save Karein</button>
+                </div>
             </div>
         </div>
 
@@ -722,7 +740,8 @@
             </div>
 
             <div class="multi-filter-box">
-                <div><label>From Date:</label><input type="date" id="fromDateFilter" onchange="filterTable()"></div>
+                <div><label>From Date:</label><input type="date" id="fromDateFilter" onchange="filterTable()">
+                </div>
                 <div><label>To Date:</label><input type="date" id="toDateFilter" onchange="filterTable()"></div>
                 <div><label>Kharidar (Buyer):</label><select id="buyerFilter" onchange="filterTable()">
                         <option value="">-- Sabhi --</option>
@@ -819,6 +838,7 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         let masters = {
             party: ["Amit Traders", "Ramesh & Sons", "Kisan Godown"],
@@ -828,15 +848,93 @@
         let transactions = [];
         let currentEditId = null;
 
+        // FIXED: Only initialization code is inside window.onload now.
         window.onload = function () {
             document.getElementById('dateInput').valueAsDate = new Date();
 
-            db.collection("settings").doc("masters").onSnapshot((doc) => {
-                if (doc.exists) {
-                    masters = doc.data();
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('mainApp').style.display = 'block';
+                    loadAppData();
                 } else {
-                    db.collection("settings").doc("masters").set(masters);
+                    document.getElementById('loginScreen').style.display = 'flex';
+                    document.getElementById('mainApp').style.display = 'none';
                 }
+            });
+
+            flatpickr("#dateInput", {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d-m-Y",
+                allowInput: true,
+                onReady: function (selectedDates, dateStr, instance) {
+                    instance.altInput.addEventListener('input', function (e) {
+                        let val = this.value.replace(/\D/g, '');
+                        if (val.length > 8) val = val.substring(0, 8);
+                        let formatted = val;
+                        if (val.length > 2) {
+                            formatted = val.substring(0, 2) + '-' + val.substring(2);
+                        }
+                        if (val.length > 4) {
+                            formatted = formatted.substring(0, 5) + '-' + formatted.substring(5).replace('-', '');
+                        }
+                        this.value = formatted;
+                    });
+
+                    instance.altInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            setTimeout(() => document.getElementById('buyerInput').focus(), 10);
+                        }
+                    });
+                }
+            });
+        };
+
+        // FIXED: ALL FUNCTIONS MOVED OUTSIDE window.onload SO THEY CAN BE ACCESSED BY HTML BUTTONS
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function loginUser() {
+            let email = document.getElementById('emailInput').value;
+            let password = document.getElementById('passwordInput').value;
+            let errorMsg = document.getElementById('errorMsg');
+
+            if (!email || !password) {
+                errorMsg.innerText = "Email aur Password dono daalein!";
+                errorMsg.style.display = "block";
+                return;
+            }
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    errorMsg.style.display = "none";
+                })
+                .catch((error) => {
+                    errorMsg.innerText = "❌ Galat Email ya Password!";
+                    errorMsg.style.display = "block";
+                });
+        }
+
+        function logoutUser() {
+            auth.signOut().then(() => {
+                document.getElementById('emailInput').value = "";
+                document.getElementById('passwordInput').value = "";
+            });
+        }
+
+        function loadAppData() {
+            db.collection("settings").doc("masters").onSnapshot((doc) => {
+                if (doc.exists) masters = doc.data();
+                else db.collection("settings").doc("masters").set(masters);
                 updateDatalists();
             });
 
@@ -850,54 +948,19 @@
                 transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
                 filterTable();
             });
-
-            // NAYA: Date format ab YYYY ke sath hai aur Enter dabane par Next jayega
-            flatpickr("input[type='date']", {
-                dateFormat: "Y-m-d",
-                altInput: true,
-                altFormat: "d-m-Y", // Y capital hai saal ke 4 digits (2026) ke liye
-                allowInput: true,
-                onReady: function (selectedDates, dateStr, instance) {
-                    instance.altInput.addEventListener('input', function (e) {
-                        let val = this.value.replace(/\D/g, '');
-                        if (val.length > 8) val = val.substring(0, 8); // Ab 8 digits allowed hain (dd-mm-yyyy)
-                        let formatted = val;
-                        if (val.length > 2) {
-                            formatted = val.substring(0, 2) + '-' + val.substring(2);
-                        }
-                        if (val.length > 4) {
-                            formatted = formatted.substring(0, 5) + '-' + formatted.substring(5).replace('-', '');
-                        }
-                        this.value = formatted;
-                    });
-
-                    // Enter dabane par date field se focus Buyer par bhejna
-                    instance.altInput.addEventListener('keydown', function (e) {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            setTimeout(() => document.getElementById('buyerInput').focus(), 10);
-                        }
-                    });
-                }
-            });
-        };
-
-        // --- SABHI FUNCTIONS ---
+        }
 
         function saveMastersLocally() {
             db.collection("settings").doc("masters").set(masters);
         }
 
-        // NAYA: Transport Auto-fill function
         function onBuyerChange(input) {
             checkAndAddMaster(input, 'party', 'Party');
 
             let buyerName = input.value.trim();
             let transportInput = document.getElementById('transportInput');
 
-            // Sirf tab auto-fill karega jab transport field khali ho
             if (buyerName !== "" && transportInput.value === "") {
-                // Transactions already date se sorted hain (naya sauda pehle hai)
                 let lastTxn = transactions.find(t => t.buyer === buyerName && t.transport && t.transport.trim() !== "");
                 if (lastTxn) {
                     transportInput.value = lastTxn.transport;
@@ -1009,7 +1072,13 @@
             let val = inputElement.value.trim();
             if (val !== "" && !masters[type].includes(val)) {
                 if (confirm(`'${val}' naya hai. Kya Master list mein jodna chahte hain?`)) {
-                    masters[type].push(val); saveMastersLocally();
+                    db.collection("settings").doc("masters").update({
+                        [type]: firebase.firestore.FieldValue.arrayUnion(val)
+                    }).then(() => {
+                        console.log(val + " master list mein add ho gaya.");
+                    }).catch((error) => {
+                        alert("Naya naam save karne mein dikkat aayi: " + error.message);
+                    });
                 }
             }
         }
@@ -1044,24 +1113,54 @@
         function renderMasterList(containerId, type) {
             let container = document.getElementById(containerId); container.innerHTML = "";
             masters[type].forEach((val, index) => {
-                container.innerHTML += `<div class="master-list-item"><span>${val}</span><div>
-                <button class="action-btn btn-edit" onclick="editMasterItem('${type}', ${index})">✏️ Edit</button>
-                <button class="action-btn btn-pending" onclick="deleteMasterItem('${type}', ${index})">🗑️ Delete</button></div></div>`;
+                container.innerHTML += `<div class="master-list-item"><span>${escapeHtml(val)}</span><div>
+<button class="action-btn btn-edit" onclick="editMasterItem('${type}', ${index})">✏️ Edit</button>
+<button class="action-btn btn-pending" onclick="deleteMasterItem('${type}', ${index})">🗑️ Delete</button></div></div>`;
             });
         }
 
         function editMasterItem(type, index) {
-            let oldVal = masters[type][index]; let newVal = prompt("Naya naam likhein:", oldVal);
+            let oldVal = masters[type][index];
+            let newVal = prompt("Naya naam likhein:", oldVal);
+
             if (newVal && newVal.trim() !== "" && newVal !== oldVal) {
-                masters[type][index] = newVal.trim(); saveMastersLocally(); renderMasterList(type + 'MasterList', type);
+                masters[type][index] = newVal.trim();
+                saveMastersLocally();
+                renderMasterList(type + 'MasterList', type);
+
                 if (confirm("Kya purane saudo mein bhi yeh naam badalna hai?")) {
+                    let batch = db.batch();
+                    let updateCount = 0;
+
                     transactions.forEach(t => {
-                        let updated = false;
-                        if (type === 'party') { if (t.buyer === oldVal) { t.buyer = newVal; updated = true; } if (t.supplier === oldVal) { t.supplier = newVal; updated = true; } }
-                        if (type === 'item') { if (t.item === oldVal) { t.item = newVal; updated = true; } }
-                        if (type === 'transport') { if (t.transport === oldVal) { t.transport = newVal; updated = true; } }
-                        if (updated) db.collection("transactions").doc(t.id).update(t);
+                        let updateData = {};
+                        let isUpdated = false;
+
+                        if (type === 'party') {
+                            if (t.buyer === oldVal) { updateData.buyer = newVal; isUpdated = true; }
+                            if (t.supplier === oldVal) { updateData.supplier = newVal; isUpdated = true; }
+                        }
+                        if (type === 'item') {
+                            if (t.item === oldVal) { updateData.item = newVal; isUpdated = true; }
+                        }
+                        if (type === 'transport') {
+                            if (t.transport === oldVal) { updateData.transport = newVal; isUpdated = true; }
+                        }
+
+                        if (isUpdated) {
+                            let docRef = db.collection("transactions").doc(t.id);
+                            batch.update(docRef, updateData);
+                            updateCount++;
+                        }
                     });
+
+                    if (updateCount > 0) {
+                        batch.commit().then(() => {
+                            console.log("Purane saude fast aur safe tareeqe se update ho gaye.");
+                        }).catch((error) => {
+                            alert("Update karne mein dikkat aayi: " + error.message);
+                        });
+                    }
                 }
             }
         }
@@ -1083,7 +1182,10 @@
             let rate = parseFloat(document.getElementById('rateInput').value);
             let transport = document.getElementById('transportInput').value;
 
-            if (!buyer || !supplier || !item || isNaN(qty) || isNaN(weight) || isNaN(rate)) { alert("Kripya zaruri details bharein!"); return; }
+            if (!buyer || !supplier || !item || isNaN(qty) || isNaN(weight) || isNaN(rate)) {
+                alert("Kripya zaruri details bharein!");
+                return;
+            }
 
             let malAmount = weight * rate;
             let bardanaRate = parseFloat(document.getElementById('bardanaRateInput').value) || 0; let bardanaTotal = parseFloat(document.getElementById('bardanaTotalInput').value) || 0;
@@ -1107,15 +1209,39 @@
 
             if (currentEditId === null) {
                 entryData.isReceived = false; entryData.paymentDone = false; entryData.paymentDate = "";
-                db.collection("transactions").add(entryData);
-            } else {
-                db.collection("transactions").doc(currentEditId).update(entryData);
-                currentEditId = null;
-                let btn = document.getElementById('saveBtn'); btn.innerHTML = "💾 Sauda Save Karein"; btn.style.backgroundColor = "#27ae60";
-            }
 
-            clearForm();
-            if (window.innerWidth <= 768) { document.getElementById('entryFormCard').style.display = 'none'; document.getElementById('mobileAddFormBtn').innerHTML = "➕"; document.getElementById('mobileAddFormBtn').style.backgroundColor = "#27ae60"; }
+                db.collection("transactions").add(entryData)
+                    .then(() => {
+                        clearForm();
+                        if (window.innerWidth <= 768) {
+                            document.getElementById('entryFormCard').style.display = 'none';
+                            document.getElementById('mobileAddFormBtn').innerHTML = "➕";
+                            document.getElementById('mobileAddFormBtn').style.backgroundColor = "#27ae60";
+                        }
+                    })
+                    .catch((error) => {
+                        alert("❌ Sauda save karne mein dikkat aayi: " + error.message);
+                    });
+
+            } else {
+                db.collection("transactions").doc(currentEditId).update(entryData)
+                    .then(() => {
+                        currentEditId = null;
+                        let btn = document.getElementById('saveBtn');
+                        btn.innerHTML = "💾 Sauda Save Karein";
+                        btn.style.backgroundColor = "#27ae60";
+
+                        clearForm();
+                        if (window.innerWidth <= 768) {
+                            document.getElementById('entryFormCard').style.display = 'none';
+                            document.getElementById('mobileAddFormBtn').innerHTML = "➕";
+                            document.getElementById('mobileAddFormBtn').style.backgroundColor = "#27ae60";
+                        }
+                    })
+                    .catch((error) => {
+                        alert("❌ Sauda update karne mein dikkat aayi: " + error.message);
+                    });
+            }
         }
 
         function clearForm() {
@@ -1138,7 +1264,6 @@
             let btn = document.getElementById('saveBtn'); btn.innerHTML = "🔄 Sauda Update Karein"; btn.style.backgroundColor = "#e67e22";
         }
 
-        // NAYA: 4 digit saal ke format ke hisab se theek kiya
         function formatDateDDMMYY(dateStr) {
             if (!dateStr) return ''; let p = dateStr.split('-'); if (p.length === 3) return p[2] + '-' + p[1] + '-' + p[0]; return dateStr;
         }
@@ -1153,24 +1278,24 @@
                 boxDetailsHtml = `<div class="bag-weight-box"><div style="margin-bottom: 5px;"><strong>Weight Details:</strong></div><div style="display: flex; flex-wrap: wrap;">${groupedHtml}</div></div>`;
             }
             let lessWeightHtml = ''; if (t.lessWeight > 0) { lessWeightHtml = `<div class="receipt-row" style="color:#d35400;"><span>Katoti (Less):</span> <span>- ${t.lessWeight} KG × ${t.qty} = <strong>${parseFloat((t.lessWeight * t.qty).toFixed(2))} KG</strong></span></div>`; }
-            let extraName = t.extraName === 'Extra' || !t.extraName ? 'Extra Kharcha' : t.extraName;
+            let extraName = t.extraName === 'Extra' || !t.extraName ? 'Extra Kharcha' : escapeHtml(t.extraName);
             let extraLine = t.extraTotal > 0 ? ` | ${extraName}: ₹${parseFloat(t.extraTotal.toFixed(2))}` : '';
 
             let modalBody = document.getElementById('modalBody');
             modalBody.innerHTML = `
-            <div class="receipt-header"><h2 style="margin:0; font-size: 22px; color:#2c3e50; text-align:left;">${t.buyer}</h2><span style="color:#7f8c8d; font-weight:bold; font-size:16px;">${formattedDate}</span></div>
-            <div class="receipt-row"><span><strong>Item:</strong></span> <span>${t.item} ${t.lot ? '(Lot: ' + t.lot + ')' : ''} <strong>| ${t.qty} Bags</strong></span></div>
-            ${boxDetailsHtml}
-            <div class="receipt-row"><span>Gross Wajan:</span> <span>${t.grossWeight} KG</span></div>
-            ${lessWeightHtml}
-            <div class="receipt-row"><span>Net Wajan:</span> <span><strong style="color:#2c3e50; font-size:16px;">${t.weight} KG</strong></span></div>
-            <div class="receipt-row"><span>Bhav (Rate):</span> <span>₹${t.rate} /KG</span></div>
-            <div class="receipt-row"><span>Mal ka Amount:</span> <span>₹${t.malAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
-            <div class="receipt-row" style="margin-top:10px; border-top:1px dotted #ccc; padding-top:10px; color:#c0392b;"><span><strong>Extra Kharche:</strong></span> <span>₹${t.totalKharcha.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
-            <div style="font-size:12px; color:#7f8c8d; text-align:right;">(Bardana: ₹${parseFloat(t.bardanaTotal.toFixed(2))}) <br>(Kanta: ₹${parseFloat(t.kantaTotal.toFixed(2))}) <br>(Bhada: ₹${parseFloat(t.thilibhadaTotal.toFixed(2))}) <br>(Muddat ${t.muddatPercent}%: ₹${parseFloat(t.muddatTotal.toFixed(2))}) ${extraLine}</div>
-            <div class="receipt-row" style="margin-top:10px; border-top:2px solid #333; padding-top:10px; font-size:18px; color:green;"><span><strong>Total Amount:</strong></span> <span><strong>₹${t.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></span></div>
-            <div class="receipt-row" style="margin-top:10px; font-size:13px;"><span><strong>Transport:</strong></span> <span>${t.transport || '-'}</span></div>
-        `;
+<div class="receipt-header"><h2 style="margin:0; font-size: 22px; color:#2c3e50; text-align:left;">${escapeHtml(t.buyer)}</h2><span style="color:#7f8c8d; font-weight:bold; font-size:16px;">${formattedDate}</span></div>
+<div class="receipt-row"><span><strong>Item:</strong></span> <span>${escapeHtml(t.item)} ${t.lot ? '(Lot: ' + escapeHtml(t.lot) + ')' : ''} <strong>| ${t.qty} Bags</strong></span></div>
+${boxDetailsHtml}
+<div class="receipt-row"><span>Gross Wajan:</span> <span>${t.grossWeight} KG</span></div>
+${lessWeightHtml}
+<div class="receipt-row"><span>Net Wajan:</span> <span><strong style="color:#2c3e50; font-size:16px;">${t.weight} KG</strong></span></div>
+<div class="receipt-row"><span>Bhav (Rate):</span> <span>₹${t.rate} /KG</span></div>
+<div class="receipt-row"><span>Mal ka Amount:</span> <span>₹${t.malAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+<div class="receipt-row" style="margin-top:10px; border-top:1px dotted #ccc; padding-top:10px; color:#c0392b;"><span><strong>Extra Kharche:</strong></span> <span>₹${t.totalKharcha.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></div>
+<div style="font-size:12px; color:#7f8c8d; text-align:right;">(Bardana: ₹${parseFloat(t.bardanaTotal.toFixed(2))}) <br>(Kanta: ₹${parseFloat(t.kantaTotal.toFixed(2))}) <br>(Bhada: ₹${parseFloat(t.thilibhadaTotal.toFixed(2))}) <br>(Muddat ${t.muddatPercent}%: ₹${parseFloat(t.muddatTotal.toFixed(2))}) ${extraLine}</div>
+<div class="receipt-row" style="margin-top:10px; border-top:2px solid #333; padding-top:10px; font-size:18px; color:green;"><span><strong>Total Amount:</strong></span> <span><strong>₹${t.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></span></div>
+<div class="receipt-row" style="margin-top:10px; font-size:13px;"><span><strong>Transport:</strong></span> <span>${escapeHtml(t.transport || '-')}</span></div>
+`;
             document.getElementById('viewModal').style.display = 'block';
         }
 
@@ -1228,35 +1353,34 @@
                 if (t.isReceived) dalaliReceivedAmount += t.dalali; else dalaliPendingAmount += t.dalali;
 
                 let row = `<tr>
-                <td data-label="📅 Date:">${formatDateDDMMYY(t.date)}</td>
-                <td data-label="👤 Jisko Becha:"><strong>${t.buyer}</strong></td>
-                <td data-label="🏭 Jisse Kharida:">${t.supplier}</td>
-                <td data-label="🌾 Item (Lot):">${t.item} <br><small>(Lot: ${t.lot || '-'})</small></td>
-                <td data-label="📦 Qty:">${t.qty}</td>
-                <td data-label="⚖️ Net Wajan:"><strong>${parseFloat(t.weight.toFixed(2))}</strong></td>
-                <td data-label="📈 Bhav (₹):">₹${t.rate}</td>
-                <td data-label="💰 Total Amount:" style="color:green; font-weight:bold;">₹${t.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
-                <td data-label="💸 Dalali (1%):" style="color:#2980b9; font-weight:bold;">₹${t.dalali.toLocaleString('en-IN', { maximumFractionDigits: 2 })}<br><button class="action-btn ${t.isReceived ? 'btn-received' : 'btn-pending'}" onclick="toggleDalaliStatus('${t.id}')" style="width:100px; margin-top:5px;">${t.isReceived ? '✅ Aayi' : '⏳ Baki'}</button></td>
-                <td data-label="📝 Mal Ka Hisab:"><button class="action-btn ${t.paymentDone ? 'btn-payment-done' : 'btn-payment-pending'}" onclick="togglePaymentStatus('${t.id}')" style="width:100px;">${t.paymentDone ? '✅ Chukta' : '⏳ Baki'}</button>${t.paymentDone ? `<br><small style="color:gray">${t.paymentDate}</small>` : ''}</td>
-              <td data-label="⚙️ Actions:" style="display:flex; gap:5px; justify-content:flex-end;">
-                    <button class="action-btn btn-view" onclick="viewEntry('${t.id}')" style="flex:1; min-width:40px;">👁️</button>
-                    <button class="action-btn btn-edit" onclick="editEntry('${t.id}')" style="flex:1; min-width:40px;">✏️</button>
-                    <button class="action-btn btn-pending" onclick="deleteEntry('${t.id}')" style="flex:1; min-width:40px;">🗑️</button>
-                </td>
-            
-                </tr>`;
+<td data-label="📅 Date:">${formatDateDDMMYY(t.date)}</td>
+<td data-label="👤 Jisko Becha:"><strong>${escapeHtml(t.buyer)}</strong></td>
+<td data-label="🏭 Jisse Kharida:">${escapeHtml(t.supplier)}</td>
+<td data-label="🌾 Item (Lot):">${escapeHtml(t.item)} <br><small>(Lot: ${escapeHtml(t.lot || '-')})</small></td>
+<td data-label="📦 Qty:">${t.qty}</td>
+<td data-label="⚖️ Net Wajan:"><strong>${parseFloat(t.weight.toFixed(2))}</strong></td>
+<td data-label="📈 Bhav (₹):">₹${t.rate}</td>
+<td data-label="💰 Total Amount:" style="color:green; font-weight:bold;">₹${t.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</td>
+<td data-label="💸 Dalali (1%):" style="color:#2980b9; font-weight:bold;">₹${t.dalali.toLocaleString('en-IN', { maximumFractionDigits: 2 })}<br><button class="action-btn ${t.isReceived ? 'btn-received' : 'btn-pending'}" onclick="toggleDalaliStatus('${t.id}')" style="width:100px; margin-top:5px;">${t.isReceived ? '✅ Aayi' : '⏳ Baki'}</button></td>
+<td data-label="📝 Mal Ka Hisab:"><button class="action-btn ${t.paymentDone ? 'btn-payment-done' : 'btn-payment-pending'}" onclick="togglePaymentStatus('${t.id}')" style="width:100px;">${t.paymentDone ? '✅ Chukta' : '⏳ Baki'}</button>${t.paymentDone ? `<br><small style="color:gray">${t.paymentDate}</small>` : ''}</td>
+<td data-label="⚙️ Actions:" style="display:flex; gap:5px; justify-content:flex-end;">
+<button class="action-btn btn-view" onclick="viewEntry('${t.id}')" style="flex:1; min-width:40px;">👁️</button>
+<button class="action-btn btn-edit" onclick="editEntry('${t.id}')" style="flex:1; min-width:40px;">✏️</button>
+<button class="action-btn btn-pending" onclick="deleteEntry('${t.id}')" style="flex:1; min-width:40px;">🗑️</button>
+</td>
+</tr>`;
                 tbody.innerHTML += row;
             });
 
             tfoot.innerHTML = `<tr>
-            <td data-label="YOG" colspan="4" class="hide-mobile" style="text-align:right; font-size:14px;"><strong>KUL YOG:</strong></td>
-            <td data-label="📦 Kul Qty:" style="font-size:14px;"><strong>${totalQty}</strong></td>
-            <td data-label="⚖️ Kul Wajan:" style="font-size:14px; color:#d35400;"><strong>${parseFloat(totalWeightCount.toFixed(2))}</strong></td>
-            <td class="hide-mobile"></td>
-            <td data-label="💰 Kul Amount:" style="color:green; font-size:15px;"><strong>₹${grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></td>
-            <td data-label="📊 Dalali Report:" colspan="2" style="font-size: 13px;"><span style="color:#2980b9"><strong>Kul Dalali: ₹${totalDalaliAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></span><br><span style="color:#27ae60">Aayi: ₹${dalaliReceivedAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span> | <span style="color:#c0392b">Baki: ₹${dalaliPendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></td>
-            <td class="hide-mobile"></td>
-        </tr>`;
+<td data-label="YOG" colspan="4" class="hide-mobile" style="text-align:right; font-size:14px;"><strong>KUL YOG:</strong></td>
+<td data-label="📦 Kul Qty:" style="font-size:14px;"><strong>${totalQty}</strong></td>
+<td data-label="⚖️ Kul Wajan:" style="font-size:14px; color:#d35400;"><strong>${parseFloat(totalWeightCount.toFixed(2))}</strong></td>
+<td class="hide-mobile"></td>
+<td data-label="💰 Kul Amount:" style="color:green; font-size:15px;"><strong>₹${grandTotal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></td>
+<td data-label="📊 Dalali Report:" colspan="2" style="font-size: 13px;"><span style="color:#2980b9"><strong>Kul Dalali: ₹${totalDalaliAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</strong></span><br><span style="color:#27ae60">Aayi: ₹${dalaliReceivedAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span> | <span style="color:#c0392b">Baki: ₹${dalaliPendingAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span></td>
+<td class="hide-mobile"></td>
+</tr>`;
         }
 
         function shareParchi(event) {
@@ -1293,43 +1417,32 @@
                 }, 'image/png');
             });
         }
-        // --- NAYA FUNCTION: ENTRY DELETE KARNA (WITH 2 WARNINGS & SECURITY CODE) ---
+
         function deleteEntry(id) {
-            // Warning 1
             if (!confirm("⚠️ WARNING 1: Kya aap is saude ko sach mein hamesha ke liye Delete karna chahte hain?")) {
                 return;
             }
 
-            // Warning 2
             if (!confirm("🛑 WARNING 2: Dhyan dein! Ek baar delete hone ke baad ye sauda wapas nahi aayega. Pakka delete karna hai?")) {
                 return;
             }
 
-            // Security Code Generate Karna (Aaj ki Date bina dash ke, Jaise: 04092026)
-            let today = new Date();
-            let dd = String(today.getDate()).padStart(2, '0');
-            let mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
-            let yyyy = today.getFullYear();
-            let securityCode = dd + mm + yyyy;
+            let masterPin = "9988";
 
-            // Final Password (Security Code) maangna
-            let userInput = prompt(`🔒 SECURITY CHECK:\nDelete karne ke liye aaj ki date bina kisi dash ke dalein.\n\n(Hint: Aaj ka code hai ${securityCode})`, "");
+            let userInput = prompt("🔒 SECURITY CHECK:\nSauda delete karne ke liye Apna Secret PIN daalein:", "");
 
-            if (userInput === securityCode) {
-                // Agar code sahi hai toh Firebase se delete kar do
+            if (userInput === masterPin) {
                 db.collection("transactions").doc(id).delete().then(() => {
                     alert("✅ Sauda hamesha ke liye delete ho gaya hai.");
-                    // Table apne aap Firebase ke onSnapshot se update ho jayegi
                 }).catch((error) => {
                     alert("❌ Delete karne mein dikkat aayi: " + error.message);
                 });
             } else {
                 if (userInput !== null) {
-                    alert("❌ Galat Security Code! Sauda delete nahi hua.");
+                    alert("❌ Galat PIN! Sauda delete nahi hua.");
                 }
             }
         }
-
     </script>
 </body>
 
