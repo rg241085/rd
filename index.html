@@ -645,34 +645,26 @@
                         onchange="checkAndAddMaster(this, 'party', 'Party')"></div>
             </div>
 
-            <div style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
+         <div style="border-top: 1px dashed #ccc; margin: 15px 0;"></div>
 
-            <!-- PEHLA HISSA: Item, Lot, Qty aur Bharti -->
+            <!-- EK HI GRID MEIN SAB KUCH (CSS 'order' ki madad se position set ki gayi hai) -->
             <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));">
-                <div class="form-group"><label>4a. Item</label><input list="itemList" id="itemInput" class="nav-item"
-                        placeholder="Mal" onchange="checkAndAddMaster(this, 'item', 'Item')"></div>
-                <div class="form-group"><label>4b. Lot No.</label><input type="text" id="lotInput" class="nav-item"
-                        placeholder="L-105"></div>
-                <div class="form-group"><label>4c. Qty (Bags)</label><input type="number" id="qtyInput" class="nav-item"
-                        placeholder="Ex: 10" oninput="generateBoxes()"></div>
-                <div class="form-group"><label>4d. Bharti</label><input type="number" id="bhartiInput" class="nav-item"
-                        placeholder="Ex: 50" oninput="generateBoxes()"></div>
-            </div>
+                
+                <div class="form-group" style="order: 1;"><label>4a. Item</label><input list="itemList" id="itemInput" class="nav-item" placeholder="Mal" onchange="checkAndAddMaster(this, 'item', 'Item')"></div>
+                <div class="form-group" style="order: 2;"><label>4b. Lot No.</label><input type="text" id="lotInput" class="nav-item" placeholder="L-105"></div>
+                <div class="form-group" style="order: 3;"><label>4c. Qty (Bags)</label><input type="number" id="qtyInput" class="nav-item" placeholder="Ex: 10" oninput="generateBoxes()"></div>
+                <div class="form-group" style="order: 4;"><label>4d. Bharti</label><input type="number" id="bhartiInput" class="nav-item" placeholder="Ex: 50" oninput="generateBoxes()"></div>
+                
+                <!-- BOXES WALA HISSA (DOM mein yahan hai taki Enter sahi chale, par order 8 ki wajah se sabke niche dikhega) -->
+                <div id="dynamicBoxesWrapper" class="boxes-wrapper" style="order: 8; grid-column: 1 / -1; margin-top: 10px;">
+                    <h4 style="margin-top: 0; margin-bottom: 10px;">📦 Har Box/Bag ka Gross Wajan:</h4>
+                    <div id="boxesContainer" class="boxes-grid"></div>
+                </div>
 
-            <!-- BOXES WALA HISSA (Ab yeh theek Bharti ke baad aayega) -->
-            <div id="dynamicBoxesWrapper" class="boxes-wrapper">
-                <h4>📦 Har Box/Bag ka Gross Wajan:</h4>
-                <div id="boxesContainer" class="boxes-grid"></div>
-            </div>
-
-            <!-- DOOSRA HISSA: Less, Net Wajan aur Bhav (Boxes ke baad) -->
-            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));">
-                <div class="form-group"><label>4e. Less (kg)</label><input type="number" id="lessWeightInput"
-                        class="nav-item" placeholder="Ex: 0.5" oninput="sumAllBoxes()"></div>
-                <div class="form-group"><label>4f. Net Wajan</label><input type="number" id="weightInput"
-                        class="nav-item weight-input" placeholder="Net Total" oninput="recalcAllExpenses()"></div>
-                <div class="form-group"><label>4g. Bhav (₹)</label><input type="number" id="rateInput" class="nav-item"
-                        placeholder="Rate" oninput="recalcAllExpenses()"></div>
+                <div class="form-group" style="order: 5;"><label>4e. Less (kg)</label><input type="number" id="lessWeightInput" class="nav-item" placeholder="Ex: 0.5" oninput="sumAllBoxes()"></div>
+                <div class="form-group" style="order: 6;"><label>4f. Net Wajan</label><input type="number" id="weightInput" class="nav-item weight-input" placeholder="Net Total" oninput="recalcAllExpenses()"></div>
+                <div class="form-group" style="order: 7;"><label>4g. Bhav (₹)</label><input type="number" id="rateInput" class="nav-item" placeholder="Rate" oninput="recalcAllExpenses()"></div>
+                
             </div>
 
             <div class="sub-header">💸 Extra Kharche (Rate ya Total koi ek daalein)</div>
